@@ -56,3 +56,6 @@ This can lead to negative data for sufficiently historical contracts. In additio
 Here are some examples of what not to do. If you're trading Fed Funds or Eurodollar futures, an open-interest-switch rule is inappropriate, because most of the "action" is in the back contracts. If you're back-testing a trading strategy, you should not use unadjusted prices, because that will introduce artifical PL from roll date jumps. If you're trading a commodity with heavy contango or backwardation, you should not use Panama canal shifts, because they will lead to negative prices. If you're trading equities or currencies, you should never look at the #2 or #3 contracts, because they are utterly illiquid. And so on.
 
 
+## B. Futures Roll Yield 
+
+$$F_t RollYield = R_t_{F_{t,T}}$$
