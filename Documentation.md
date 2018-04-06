@@ -59,3 +59,4 @@ Here are some examples of what not to do. If you're trading Fed Funds or Eurodol
 ## B. Futures Roll Yield 
 
 $$F_t RollYield = R_t_{F_{t,T}}$$
+ <img src="https://latex.codecogs.com/gif.latex?O_t=\text { Onset event at time bin } t " /> 
