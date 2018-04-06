@@ -58,5 +58,4 @@ Here are some examples of what not to do. If you're trading Fed Funds or Eurodol
 
 ## B. Futures Roll Yield 
 
-$$F_t RollYield = R_t_{F_{t,T}}$$
- <img src="https://latex.codecogs.com/gif.latex?O_t=\text { Onset event at time bin } t " /> 
+<a href="https://www.codecogs.com/eqnedit.php?latex=$$RollYield&space;=&space;R_t_{F_{t,T}}&space;-&space;R_t_{S_t}$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$RollYield&space;=&space;R_t_{F_{t,T}}&space;-&space;R_t_{S_t}$$" title="$$RollYield = R_t_{F_{t,T}} - R_t_{S_t}$$" /></a> 
