@@ -37,8 +37,8 @@ This method alleviates the "gap" across multiple contracts by shifting each cont
 > Shift successive contracts up or down by a constant amount so as to eliminate jumps, working backwards from the current contract. The price of the current continuous contract will be "true" and match market prices; however, you will need to recalculate your entire history on every roll date, which may be impractical.
 
 The key problem with the Panama method includes the introduction of a trend bias, which will introduce a large drift to the prices.
-This can lead to negative data for sufficiently historical contracts. In addition there is a loss of the relative price differences due to an absolute shift in values.
-2. __Backwards Ratio __
+This can lead to negative data for sufficiently historical contracts. In addition there is a loss of the relative price differences due to an absolute shift in values.  
 
+2. __Backwards Ratio __
 > Instead of shifting contracts up or down, in this method we multiply contracts by a constant factor so as to eliminate jumps, working backwards from the current contract. As with the backwards panama canal method, this method necessitates full historical recalculation on every roll date.
 
