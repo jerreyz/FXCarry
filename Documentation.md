@@ -58,8 +58,10 @@ Here are some examples of what not to do. If you're trading Fed Funds or Eurodol
 
 ## B. Futures Pricing Theory 
 
-By no Arbitrage it follows that :
-<a href="https://www.codecogs.com/eqnedit.php?latex=$$F_{t,T}&space;=&space;S_{t,T}&space;e^{(r_t&space;-&space;d_y)(T-t)}$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$F_{t,T}&space;=&space;S_{t,T}&space;e^{(r_t&space;-&space;d_y)(T-t)}$$" title="$$F_{t,T} = S_{t,T} e^{(r_t - d_y)(T-t)}$$" /></a>
+By no Arbitrage it follows that :  
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=$$F_{t,T}&space;=&space;S_{t,T}&space;e^{(r_t&space;-&space;d_y)(T-t)}$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$F_{t,T}&space;=&space;S_{t,T}&space;e^{(r_t&space;-&space;d_y)(T-t)}$$" title="$$F_{t,T} = S_{t,T} e^{(r_t - d_y)(T-t)}$$" /></a>  
+
 where r_t is the risk free rate one gets from shorting the underlying and investing in the risk free asset and d_y represents the opportunity cost or dividend yield one would receive from holding the underlying.
 
 
@@ -67,5 +69,5 @@ where r_t is the risk free rate one gets from shorting the underlying and invest
 Roll Yield 
 
 
-Roll yield is defined as the difference in return between a futures contract and its underlying asset
+Roll yield is defined as the difference in return between a futures contract and its underlying asset  
 <a href="https://www.codecogs.com/eqnedit.php?latex=$$RollYield&space;=&space;R_t_{F_{t,T}}&space;-&space;R_t_{S_t}$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$RollYield&space;=&space;R_t_{F_{t,T}}&space;-&space;R_t_{S_t}$$" title="$$RollYield = R_t_{F_{t,T}} - R_t_{S_t}$$" /></a> 
