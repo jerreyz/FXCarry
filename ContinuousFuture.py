@@ -1,8 +1,9 @@
 """
-Adjusted prices:
+There exist multiple ways to stitch together futures prices.
+One of the methods shown here is the Panama Back adjusted method.
+You start from last contract and recursively adjust absolute prices such that they match up.
 
-- back-adjustor
-- just adjusted prices
+
 
 """
 
