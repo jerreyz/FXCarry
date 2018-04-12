@@ -1,4 +1,4 @@
-class QuandlFutures(object):
+class QuandlFuturesConfiguration(object):
 
      # This class deals with handling quandl futures
      
