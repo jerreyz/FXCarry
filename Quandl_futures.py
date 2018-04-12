@@ -17,10 +17,11 @@ class QuandlFutures(object):
         # This method will try to get all the information on a specific instrument
         if instrument_code not in self.get_list_of_instruments():
             raise Exception("Instrument %s missing from config file " % (instrument_code))
-
-        data_for_code = self.config_data.loc[instrument_code]
-
-        return data_for_code
+          
+        instrumentconfigdata = self.config_data.loc[instrument_code]
+        return instrumentconfigdata
         
     def get_quandl_code_for_instrument(self,instrument):
+     
+     # Gets the QUANDL code for a specific instrument
         return self.config_data.loc[instrument,'QCODE']
