@@ -1,0 +1,344 @@
+				/*		Private
+						Author: Niklas Grimm (NG)
+						Date: April 2018 	*/ 
+					
+********************************************************************************
+					*** %% 1.0 LOAD FX DATA %% ***	
+********************************************************************************
+
+clear  
+ssc install winsor2
+cd "C:\Users\grimmnk\Desktop\Algorithms\Data Continuous"
+import excel "C:\Users\grimmnk\Desktop\Algorithms\Data Continuous\Adv_xl1.xlsx", sheet("Adj_Output") firstrow
+save "FX", replace
+
+********************************************************************************
+					*** %% 2.0 CLEANSE DATA %% ***	
+********************************************************************************
+
+
+
+rename Name time
+tsset time
+
+
+
+rename USTOAUSTRALIANWMREXC S_USD_AUS
+rename CMEAUSTRALIANDOLLRCOMPCONT F_USD_AUS
+rename USTOCHINESEYUANGTISTR S_USD_YUAN
+rename CMECHINESERENMINBIUSCONT F_USD_YUAN
+rename USTOECUEUROWMREXCHANG S_USD_EURO
+rename CMEEMICROEURUSDCONTINUOUSA F_USD_EURO
+rename USTONEWZEALANDWMREX S_USD_NZL
+rename CMENEWZEALANDCOMPCONTAV F_USD_NZL
+rename USTOSWEDISHKRONAGTISTR S_USD_SWE
+rename CMESWEDISHKRONACONTAVGS F_USD_SWE
+rename USTOUKWMREXCHANGERA S_USD_GBP
+rename CMESTERLINGCOMPCONTINUOUSAV F_USD_GBP
+
+
+gen S_USD_RUS = RUSSIANROUBLETOUSEXCHANG^-1
+gen F_USD_RUS = CMERUSSIANROUBLECOMPCONTA^-1
+gen S_USD_JPY = JAPANESEYENTOUSWMREXC^-1
+gen F_USD_JPY = CMEEMINIJAPANESEYENCONTAV^-1
+gen S_USD_SWF = SWISSFRANCTOUSWMREXCH^-1
+gen F_USD_SWF = CMESWISSFRANCCOMPCONTAVG^-1
+
+
+drop RUSSIANROUBLETOUSEXCHANG CMERUSSIANROUBLECOMPCONTA JAPANESEYENTOUSWMREXC 	///
+CMEEMINIJAPANESEYENCONTAV SWISSFRANCTOUSWMREXCH CMESWISSFRANCCOMPCONTAVG O N V W	
+
+
+
+
+// CLEANSE STRING
+foreach T of varlist F_USD_YUAN F_USD_EURO F_USD_SWE { 
+
+replace `T' = "." if `T' == "NA"
+destring `T', replace
+
+
+}
+
+
+
+// CENSOR at 1 and 99 %
+foreach T of varlist S_USD_AUS F_USD_AUS S_USD_YUAN F_USD_YUAN S_USD_EURO 		///
+F_USD_EURO S_USD_NZL F_USD_NZL S_USD_SWE F_USD_SWE S_USD_GBP F_USD_GBP 			///
+S_USD_RUS F_USD_RUS S_USD_JPY F_USD_JPY S_USD_SWF F_USD_SWF { 	
+
+winsor2 `T', suffix(win_) cuts(1 99) 
+
+drop `T'
+rename `T'win_ `T'
+
+}
+
+
+tsset time 
+sort time
+
+
+save "FX1", replace
+
+
+
+
+
+
+
+********************************************************************************
+					*** %% 1. USD / GBP %% ***	
+********************************************************************************
+cd "C:\Users\grimmnk\Desktop\Algorithms\FX Graphs"
+
+gen Sp_USD_GBP = F_USD_GBP -  S_USD_GBP
+
+
+tssmooth ma s_S_USD_GBP = S_USD_GBP, window(1 1 1)
+tssmooth ma s_F_USD_GBP 	= F_USD_GBP, window(1 1 1)
+tssmooth ma s_Sp_USD_GBP 	= Sp_USD_GBP, window(1 1 1)
+
+label var s_S_USD_GBP "Spot"
+label var s_F_USD_GBP "Future" 
+label var s_Sp_USD_GBP "Spread"
+
+
+
+twoway 	line s_S_USD_GBP s_F_USD_GBP time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_GBP time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)	ylabel(-0.1(0.02)0.1, labsize(small) axis(2))	yscale(range(-0.1 0.1) axis(2))	yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / GBP") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+		
+		 graph export GBP.pdf, replace
+		 
+		 
+
+
+********************************************************************************
+					*** %% 2. USD / AUS %% ***	
+********************************************************************************
+
+
+gen Sp_USD_AUS = F_USD_AUS -  S_USD_AUS
+
+
+tssmooth ma s_S_USD_AUS = S_USD_AUS, window(1 1 1)
+tssmooth ma s_F_USD_AUS 	= F_USD_AUS, window(1 1 1)
+tssmooth ma s_Sp_USD_AUS 	= Sp_USD_AUS, window(1 1 1)
+
+label var s_S_USD_AUS "Spot"
+label var s_F_USD_AUS "Future" 
+label var s_Sp_USD_AUS "Spread"
+
+
+
+twoway 	line s_S_USD_AUS s_F_USD_AUS time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_AUS time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)	ylabel(-0.1(0.02)0.1, labsize(small) axis(2))	yscale(range(-0.1 0.1) axis(2))	yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / AUS") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+		
+		 graph export AUS.pdf, replace
+
+
+********************************************************************************
+					*** %% 3. USD / EURO %% ***	
+********************************************************************************
+//// needs to cleansed
+
+gen Sp_USD_EURO = F_USD_EURO -  S_USD_EURO
+
+
+tssmooth ma s_S_USD_EURO = S_USD_EURO, window(1 1 1)
+tssmooth ma s_F_USD_EURO 	= F_USD_EURO, window(1 1 1)
+tssmooth ma s_Sp_USD_EURO 	= Sp_USD_EURO, window(1 1 1)
+
+label var s_S_USD_EURO "Spot"
+label var s_F_USD_EURO "Future" 
+label var s_Sp_USD_EURO "Spread"
+
+
+
+twoway 	line s_S_USD_EURO s_F_USD_EURO time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1) ///
+||		line s_Sp_USD_EURO time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)	ylabel(-0.05(0.01)0.05, labsize(small) axis(2))	yscale(range(-0.05 0.05) axis(2))	yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / EURO ") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+		
+
+		graph export EURO.pdf, replace
+
+
+
+********************************************************************************
+					*** %% 4. USD / JPY %% ***	
+********************************************************************************
+//// needs to cleansed
+// spot series is faulty
+
+gen Sp_USD_JPY = F_USD_JPY -  S_USD_JPY
+
+
+tssmooth ma s_S_USD_JPY = S_USD_JPY, window(1 1 1)
+tssmooth ma s_F_USD_JPY 	= F_USD_JPY, window(1 1 1)
+tssmooth ma s_Sp_USD_JPY 	= Sp_USD_JPY, window(1 1 1)
+
+label var s_S_USD_JPY "Spot"
+label var s_F_USD_JPY "Future" 
+label var s_Sp_USD_JPY "Spread"
+
+
+
+twoway 	line s_S_USD_JPY s_F_USD_JPY time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1) ///
+||		line s_Sp_USD_JPY time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)			yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / JPY ") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5)) ///
+		 graphregion(color(white)) 	
+		
+		graph export JPY.pdf, replace		 
+		 
+
+********************************************************************************
+					*** %% 5. USD / YUAN %% ***	
+********************************************************************************
+/// pegged
+
+gen Sp_USD_YUAN = F_USD_YUAN -  S_USD_YUAN
+
+
+tssmooth ma s_S_USD_YUAN = S_USD_YUAN, window(1 1 1)
+tssmooth ma s_F_USD_YUAN 	= F_USD_YUAN, window(1 1 1)
+tssmooth ma s_Sp_USD_YUAN 	= Sp_USD_YUAN, window(1 1 1)
+
+label var s_S_USD_YUAN "Spot"
+label var s_F_USD_YUAN "Future" 
+label var s_Sp_USD_YUAN "Spread"
+
+
+
+twoway 	line s_S_USD_YUAN s_F_USD_YUAN time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_YUAN time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)		///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / YUAN ") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 
+		 
+		 graph export YUAN.pdf, replace	
+		 
+	
+********************************************************************************
+					*** %% 6.  USD / NZL %% ***	
+********************************************************************************
+//cleansed
+gen Sp_USD_NZL = F_USD_NZL -  S_USD_NZL
+
+
+tssmooth ma s_S_USD_NZL = S_USD_NZL, window(1 1 1)
+tssmooth ma s_F_USD_NZL 	= F_USD_NZL, window(1 1 1)
+tssmooth ma s_Sp_USD_NZL 	= Sp_USD_NZL, window(1 1 1)
+
+label var s_S_USD_NZL "Spot"
+label var s_F_USD_NZL "Future" 
+label var s_Sp_USD_NZL "Spread"
+
+twoway 	line s_S_USD_NZL s_F_USD_NZL time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_NZL time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)	ylabel(-0.06(0.01)0.02, labsize(small) axis(2))	yscale(range(-0.06 0.02) axis(2))	yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / NZL") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+				 
+		 graph export NZL.pdf, replace	
+		 
+		 
+********************************************************************************
+					*** %% 7. USD / SWE %% ***	
+********************************************************************************
+//cleansed
+gen Sp_USD_SWE = F_USD_SWE -  S_USD_SWE
+
+
+
+
+tssmooth ma s_S_USD_SWE = S_USD_SWE, window(1 1 1)
+tssmooth ma s_F_USD_SWE 	= F_USD_SWE, window(1 1 1)
+tssmooth ma s_Sp_USD_SWE 	= Sp_USD_SWE, window(1 1 1)
+
+label var s_S_USD_SWE "Spot"
+label var s_F_USD_SWE "Future" 
+label var s_Sp_USD_SWE "Spread"
+
+twoway 	line s_S_USD_SWE s_F_USD_SWE time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_SWE time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)	ylabel(-0.01(0.005)0.01, labsize(small) axis(2))	yscale(range(-0.01 0.01) axis(2))	yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / SWE") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+				 
+		 graph export SWE.pdf, replace	
+		 
+		 
+	 
+********************************************************************************
+					*** %% 8. USD / RUS %% ***	
+********************************************************************************
+//cleansed
+gen Sp_USD_RUS = F_USD_RUS -  S_USD_RUS
+
+
+
+
+tssmooth ma s_S_USD_RUS = S_USD_RUS, window(1 1 1)
+tssmooth ma s_F_USD_RUS 	= F_USD_RUS, window(1 1 1)
+tssmooth ma s_Sp_USD_RUS 	= Sp_USD_RUS, window(1 1 1)
+
+label var s_S_USD_RUS "Spot"
+label var s_F_USD_RUS "Future" 
+label var s_Sp_USD_RUS "Spread"
+
+twoway 	line s_S_USD_RUS s_F_USD_RUS time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_RUS time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)		yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / RUS") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+				 
+		 graph export RUS.pdf, replace	
+		 
+		 
+	 
+********************************************************************************
+					*** %% 9. USD / SWF %% ***	
+********************************************************************************
+		 S_USD_SWF F_USD_SWF
+		 
+		 
+//cleansed
+gen Sp_USD_SWF = S_USD_SWF -  F_USD_SWF
+
+
+
+
+tssmooth ma s_S_USD_SWF = S_USD_SWF, window(1 1 1)
+tssmooth ma s_F_USD_SWF 	= F_USD_SWF, window(1 1 1)
+tssmooth ma s_Sp_USD_SWF 	= Sp_USD_SWF, window(1 1 1)
+
+label var s_S_USD_SWF "Spot"
+label var s_F_USD_SWF "Future" 
+label var s_Sp_USD_SWF "Spread"
+
+twoway 	line s_S_USD_SWF s_F_USD_SWF time, 	yaxis(1) ytitle("Price in USD", size(small) axis(1)) lwidth(0.1)  ///
+||		line s_Sp_USD_SWF time, 			yaxis(2) ytitle("Spread",  size(small) axis(2)) lcolor(blue)		yline(0, lwidth(0.1) axis(2)) ///
+|| 		, ttitle(, size(small)) tlabel(, labsize(small)) 	///							 ///
+		title("USD / CHF") xtitle("") 	legend(rows(1))							 		 ///
+		subtitle()	scheme(s2mono)	note(Data winsorised at (1,99), size(*0.7)) caption(All series are MA smoothed (1 1 1), size(*0.5))	 ///
+		 graphregion(color(white)) 	
+				 
+		 graph export CHF.pdf, replace			 
+	
