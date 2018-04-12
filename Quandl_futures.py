@@ -21,7 +21,25 @@ class QuandlFutures(object):
         instrumentconfigdata = self.config_data.loc[instrument_code]
         return instrumentconfigdata
         
-    def get_quandl_code_for_instrument(self,instrument):
+    def get_quandl_code_for_instrument(self,instrument_code):
      
      # Gets the QUANDL code for a specific instrument
         return self.config_data.loc[instrument,'QCODE']
+    def get_quandlmarket_for_instrument(self, instrument_code):
+
+        config = self.get_instrument_config(instrument_code)
+        return config.MARKET
+
+    def get_first_contract_date(self, instrument_code):
+
+        config = self.get_instrument_config(instrument_code)
+        start_date = config.FIRST_CONTRACT
+
+        return "%d" % start_date
+
+    def get_quandl_dividing_factor(self, instrument_code):
+
+        config = self.get_instrument_config(instrument_code)
+        factor = config.FACTOR
+
+        return float(factor)
