@@ -441,7 +441,27 @@ twoway  area s_Sp_USD_SWF time	, 	yaxis(1) ytitle("Return in %", size(small) axi
 ********************************************************************************
 S_USD_EURO F_USD_EURO
 
-gen Vol_S_USD_GBP = S_USD_GBP^2
-gen Vol_F_USD_GBP = F_USD_GBP^2
-gen Vol_S_USD_EUR = S_USD_EURO^2
-gen Vol_S_USD_EUR = F_USD_EURO^2
+arch s_Sp_USD_EURO, arch(1) garch(1)
+tsappend, add(10)
+predict USD_EURO_Vol, variance
+
+///SPRED VOLATILTIY
+foreach T of varlist Sp_USD_AUS Sp_USD_EURO Sp_USD_GBP Sp_USD_JPY Sp_USD_NZL ///
+Sp_USD_RUS Sp_USD_SWE Sp_USD_SWF Sp_USD_YUAN {
+
+arch `T', arch(1) garch(1)
+predict Vol_`T'
+
+}
+
+
+tsline Sp_USD_RUS
+
+
+// SPOT VOLATILITY
+foreach T of varlist S_USD_AUS S_USD_EURO S_USD_GBP S_USD_JPY S_USD_NZL ///
+S_USD_RUS S_USD_SWE S_USD_SWF S_USD_YUAN {
+
+arch `T', arch(1) garch(1)
+predict Vol_`T'
+
