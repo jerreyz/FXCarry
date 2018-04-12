@@ -1,0 +1,330 @@
+----------------------------------------------------------------------------------------------------
+-------------------------------------- SPREAD TRADING ----------------------------------------------
+----------------------------------------------------------------------------------------------------
+April, 2018
+
+
+
+// TIME HORIZON = [2002 - 2018, daily]
+// DATA REQUIREMENTS = [FuturePrice, SpotPrice, FutureReturn, SpotReturn, FutureVolume, SpotVolume, 
+			FutureBid_it, FutureASK_it, spotBid_it, SpotASK_it]
+
+
+// KEY DECISION: START WITH CONTINUOUS TIME SERIES AND EXTRAPOLATE INDIVIDUAL CONTRACTS
+		 OR START WITH INDIVIDUAL CONTRACTS AND BUILD CONTINUOUS FUTURES USING PANAMA METHOD
+
+
+CONTINUOUS DATA: DATASTREAM
+CONTRACT   DATA: QUANDL
+
+		https://www.quandl.com/search?query=&filter[]=Futures
+
+
+// IN WHAT FOLLOWS BELOW, WE ASSUME CONTINUOUS TIME AS WE FOCUS EXCLUSIVELY ON SPREAD TRADING  
+// FOR PROFITING ON ROLL YIELD, WE START WITH DISCRETE TIME AS WE NEED CONTRACT DATE DATA	
+
+----------------------------------------------------------------------------------------------------
+---1. Calculate Spreads
+----------------------------------------------------------------------------------------------------	
+
+	- Spread_it 	= 	[FutureReturn_it - SpotReturn_it]
+	- Spread^2_it 	= 	[FutureReturn_it - SpotReturn_it]^2	
+
+
+
+import numpy as np
+
+np.convolve(x, np.ones((N,))/N, mode='valid')
+
+assets = distinct(db.returnSecurities)
+
+normFutSpreadArray = {}
+futSpreadArray = {}
+scoreArray = {}
+movingAvgContainer = []
+
+method findFutureSpread(x,time,value,futurevalue):
+    a = db.returnValue(x,time)
+    b = db.returnFutureValue(x,time)
+    futureSpread = a - b;
+    return futureSpread
+
+for time in timeSeries:
+    for x in securities:
+        futureSpread = findSpotYield(time,x)
+        normFutSpread = futureSpread^2
+        normFutSpreadArray[x] = normFutSpread
+        futSpreadArray[x] = futureSpread
+    movingAvgContainer.append(futSpreadArray)
+
+ewma = findMovingAverages(movingAvgContainer) # 30 day window
+
+
+----------------------------------------------------------------------------------------------------	
+---2. Smooth Spreads
+----------------------------------------------------------------------------------------------------
+
+	- EWMA_it = = lambda * Spread^2_i(t-1) + (1 - lambda) * Spread_i(t-1)
+
+
+----------------------------------------------------------------------------------------------------
+---3. Obtain Quartiles of Unweighted Spread Distribution
+----------------------------------------------------------------------------------------------------
+
+	- Compute quartiles for EWMA distribution at top 5%, 10% and 15%
+	- For each i count how often its EWMA_it is in the top xth percentile
+
+
+	Count_it = freq(EWMA_it) if EWMA_it >= distribution.EWMA_it(xth)
+
+
+
+
+----------------------------------------------------------------------------------------------------
+---4. Adjust for Volatility
+----------------------------------------------------------------------------------------------------
+
+	- Compute volatility of each spot and future series. 
+	- Use GARCH(p,q): need to consider lag structure and which distribution: normal versus t(x).
+	- Take constant long_term volatility, window size is sample period.
+	
+		spotVol_it 	= alpha_s0 + alpha_s1[SpotReturn^2_i(t-1)] + beta_s1[spotVol_i(t-1)]
+		futureVol_it 	= alpha_f0 + alpha_f1[FutureReturn^2_i(t-1)] + beta_f1[FutureVol_i(t-1)]
+
+
+		spotVolLT_i 	= alpha_s0 / (1 - alpha_s1 - beta_s1)
+		futureVolLT_i 	= alpha_f0 / (1 - alpha_f1 - beta_f1)
+
+
+
+----------------------------------------------------------------------------------------------------
+---5. Adjust for liquidity
+----------------------------------------------------------------------------------------------------
+	
+- Construct a liquidity measure for each spot and future series
+
+		spotLiq_it 	= SpotReturn_it / SpotVolume_it
+		futureLiq_it 	= FutureLiq_it / FutureVolume_it 
+
+
+
+	/* Very liquid future contract, besides EURODOLLARs, EuroFX, 30 Year T-Bonds, JPY are
+
+		(1) S&P500 E-Mini(Globex)
+		(2) 10-Year T-Note(CBOT)
+		(3) Nikkei 225 Mini(JPX)
+		(4) Euro-Bund(EUREX)
+		(5) Crude Oil(NYM)
+		(6) 5-Year T-Notes(CBOT)
+		(7) Euro-Bob(EUREX)
+		(8) Brent Crude(ICE)
+		(9) Gold(CMX)
+		(10)EuroSchatz(EUREX) 
+
+
+	   Note: Commodities exhibit strong seasonal trends in liquidity and volatility	*/ 
+
+----------------------------------------------------------------------------------------------------
+---6. Adjust for trading costs
+----------------------------------------------------------------------------------------------------
+	
+	- Can be proxied by bid-ask spread
+
+		spotBAspread_it 	= SpotBid_it - SpotASK_it
+		futureBAspread_it 	= FutureBid_it - FutureASK_it
+	
+	/* Note: Lower volatility entails larger trading volumes to achieve return, pushing up 
+	   trading costs. Need to think about low volatility and cost trade off */ 
+
+
+----------------------------------------------------------------------------------------------------
+---6. Weight the Spread Count 
+----------------------------------------------------------------------------------------------------
+
+Spread count is weighted by volatility (-/+)?, liqudity (+) and costs(-)
+
+	AdjSpread_it = EWMA_it * norm.inv(spotVolLT_i) * norm(futureLiq_it) * norm.in(futureBAspread_it)
+
+
+Discussion: Do we seek high volatility or low volatility?
+
+			(1) FutureReturn = SpotReturn + ExcessCost&Benefit
+			(2) RollYield = Future Return - Spot Return
+			    ... RollYield = ExcessCost&Benefit
+			
+
+
+			If Spot has low volatility, then SpotReturn is likely to be constant. Hence, 					possibility look in an immediate profit.
+
+			If Spot has low volatility, then need more leverage for return. Arguably 
+			low volatlity has "nasty" kurtosis, implying unexpected shifts from low vol 
+			to high vol regime.
+
+ 
+	
+
+/*AdjCount_it  = Count_it * norm.inv(spotVolLT_i) * norm(futureLiq_it) * norm.in(futureBAspread_it) */
+
+----------------------------------------------------------------------------------------------------
+---8. Obtain Quartiles of Weighted Spread Distribution
+----------------------------------------------------------------------------------------------------
+
+	- Compute quartiles for AdjSpread_it  distribution at top 5%, 10% and 15%
+	- For each i count how often its AdjSpread_it is in the top xth percentile
+
+
+		adj.Count_it = freq(AdjSpread_it) if AdjSpread_it  >= distribution.AdjSpread_it (xth)
+
+
+		
+This will give us future-spot pair securities with the most frequent attractive spreads, adjusted for liquidity, costs and volatility.
+
+
+
+
+----------------------------------------------------------------------------------------------------
+---9. Counterfactual
+----------------------------------------------------------------------------------------------------
+
+Take top 10 spreads & weight money invested into them according to the number of times they have exceeded threshold value.
+
+	For example, 100 POUNDS - 66% into the top securities (weighted by how often theyre in the top) 	33% - hedging fund e.g. apple with 30 becomes a higher share of 0.66*100 POUNDS than oracle
+
+
+			APPLE - 20 - 30 POUNDS
+			MICROSOFT - 4 - 4
+			ORACLE - 9 - X
+			AMAZON - 12 X
+			FB - 20 - 30 POUNDS
+
+	MECHANISM: return non-normalised future spread values for each of the top securities & if spread 		< 0 then we short, > 0 then we long
+
+
+
+# look into methods of deciding hedge split: e.g. is 1$ long in future completely offset by 1$ short in stock or is it 0.8$ or 1.2$???
+
+# Offsetting position in the stock (long future, short stock / long stock, short future)
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+------------------------------------------ ROLL YIELD ----------------------------------------------
+----------------------------------------------------------------------------------------------------
+
+/* Need to establish the relationship between various contract expiration dates [time] and
+   the corresponding futures prices. This will show whether future is trading at
+
+	
+		(a) contango 	   = 	premium to the spot price
+		(b) backwardation  = 	discount to the spot price	
+
+
+   Future price will eventually converge to the spot price as contract maturity nears.
+   Simultanously, the cost to carry increases with time. Cost of carry refers to the cost
+   of storage and insurance. In capital markets, the cost of carry refers to the difference
+   between the itnerest generated on the instruments and the cost of funds to finance a position.
+
+   Certain markets may be more vulnerable in going into a state of of backwardation due to market
+   strucutre. (Look into supply shocks from the past)						*/
+
+
+This requires data on contract initiation and contract expiration.
+
+		Alternatively, if contracts usually have a predetermined length, say 30 days, we can 				extrapolate the all new contracts using one initiation date. In line with "first day
+		of month" as role date rule, and "calendar-weighted rolling" as our price adjustment.
+
+			# Spoke to an Economist here, who said that to go from continuous time to 			 		  discrete to extrapolate individual contracts is not desirable. We should 
+			  source contract data.
+
+
+
+// TIME HORIZON = [2002 - 2018, daily]
+// DATA REQUIREMENTS = DISCRETE DATA ON INDIVIDUAL CONTRACTS CONTAINING:
+
+		
+		 FutureContract_it			  SPOT_it	
+	
+		[ FuturePrice 	]			[SpotPrice]
+		[ FutureReturn 	]			[SpotReturn]
+		[ FutureVolume	]			[SpotVolume]
+		[ FutureASK	]			[SpotAsk]
+		[ FutureBID	]			[SpotBid]
+		[ FutureInitDate]			
+		[ FutureExpDate	]	
+	
+
+Aim is to find high inverse correlation of future term strucutre:
+
+# LONG:
+# If active is increasing then want to transition, if active decreasing hold
+# SHORT:
+# If active is increasing then want to hold, if active decreasing transition
+
+
+DISCUSSION: WHICH CONTRACT LENGTH ARE WE INTERESTED IN? 1 MONTH, 3 MONTH, 1 QUARTER, ETC.?
+
+
+----------------------------------------------------------------------------------------------------
+---1. Price Stitching
+----------------------------------------------------------------------------------------------------
+
+ (1) Use Panama Method, shifting the former (latter) contract parallell until it lines up with 
+     the latter (former). Forward Panama Canal Method (Backward Panana Canal Method)
+	- In Forward Panama Canal, the oldest contract price will be true, the remainder is adjusted
+	- In Backward, the current continuous contract will be true. Though, you will need to 
+	  recalculate your entire histry on every roll date, which may be impractical
+
+		Panama Methods induce trend baises, which will introduce large drift to prices, which
+		may lead to negative data for sufficiently historical contracts
+
+ (2) Backwards Ratio
+	- Instead of shifting contracts up or down, we multiply the contracts by a constant factor so
+	  as to eliminate jumps, working backwards from the current contract. As with Backwards Panama
+	  canal method, this approach necessitates full historical recalculations on every roll date
+
+		
+----------------------------------------------------------------------------------------------------
+---2. Measuring Cycles
+----------------------------------------------------------------------------------------------------
+
+	- Need to compare current contract with next nearer delivery
+		- Assume holding Sep 15, compare with Aug 15
+		- Compare current to spot (as done above)
+		- If neither available, compare Sep 15 with Oct15 or Dec15
+
+
+	- if long in future, be in backwardated environemt, downward sloping	 [Next contract cheaper]
+	- if short in future, be in contango environment, upward sloping  [Next contract more expensive]
+
+
+	HOW TO MEASURE CONTANGO?
+
+		Annualisation to compare different futures:
+
+		
+		Cycle_it = [log(FuturePrice_i(t=j) / FuturePrice_i(t=k)) / (t=j - t=i)] * 365
+
+			where t=(j,k) denotes the days to expiration of future (j,k) of security i.
+
+		If Cycle_it > 0, then we are in contango.
+		If Cycle_it < 0, then we are in backwardation.
+
+		
+
+----------------------------------------------------------------------------------------------------
+---3. Rolling Policy
+----------------------------------------------------------------------------------------------------
+
+
+# How many days before expiry do we roll?
+# Which subset of available contracts due we consider in our rolling cycle?
+
+
+	
