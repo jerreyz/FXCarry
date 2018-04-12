@@ -4,7 +4,7 @@
 
 ## A. Contracts 
 
-- EURODOLLAR [ED]
+- EURODOLLAR Future [ED]
 
 >How the Eurodollar futures contract works
 For example, if on a particular day an investor buys a single three-month contract at 95.00 (implied settlement LIBOR of 5.00%):
@@ -39,7 +39,7 @@ This method alleviates the "gap" across multiple contracts by shifting each cont
 The key problem with the Panama method includes the introduction of a trend bias, which will introduce a large drift to the prices.
 This can lead to negative data for sufficiently historical contracts. In addition there is a loss of the relative price differences due to an absolute shift in values.  
 
-2. __Backwards Ratio __
+2. __Backwards Ratio__
 > Instead of shifting contracts up or down, in this method we multiply contracts by a constant factor so as to eliminate jumps, working backwards from the current contract. As with the backwards panama canal method, this method necessitates full historical recalculation on every roll date.
 
 ### Which roll date and price adjustment should I use?
