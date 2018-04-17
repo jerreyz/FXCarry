@@ -1,0 +1,62 @@
+quandl.ApiConfig.api_key = load_private_key()
+
+
+class QuandlFuturesContract(futuresContract):
+    """
+    An individual futures contract, with additional Quandl methods
+    """
+
+    def __init__(self, futures_contract, quandl_instrument_data = USE_DEFAULT):
+        """
+        We always create a quandl contract from an existing, normal, contract
+
+        :param futures_contract: of type FuturesContract
+        """
+
+        super().__init__(futures_contract.instrument, futures_contract.contract_date)
+
+        if quandl_instrument_data is USE_DEFAULT:
+            quandl_instrument_data = quandlFuturesConfiguration()
+
+        self._quandl_instrument_data = quandl_instrument_data
+    @classmethod
+    def RawConstructor(self,quandlCode,dateOfContract):
+        TODO
+    def quandl_identifier(self):
+        """
+        Returns the Quandl identifier for a given contract
+
+        :return: str
+        """
+
+        quandl_year = str(self.contract_date.year())
+        quandl_month = self.contract_date.letter_month()
+
+        try:
+            quandl_date_id = quandl_month + quandl_year
+
+            market = self.get_quandlmarket_for_instrument()
+            codename = self.get_quandlcode_for_instrument()
+
+            quandldef = '%s/%s%s' % (market, codename, quandl_date_id)
+
+            return quandldef
+        except:
+            raise ValueError("Can't turn %s %s into a Quandl Contract" % (self.instrument_code, self.contract_date))
+
+    def get_quandlcode_for_instrument(self):
+
+        return self._quandl_instrument_data.get_quandlcode_for_instrument(self.instrument_code)
+
+    def get_quandlmarket_for_instrument(self):
+
+        return self._quandl_instrument_data.get_quandlmarket_for_instrument(self.instrument_code)
+
+    def get_start_date(self):
+
+        return self._quandl_instrument_data.get_start_date(self.instrument_code)
+
+    def get_dividing_factor(self):
+
+        return self._quandl_instrument_data.get_quandl_dividing_factor(self.instrument_code)
+    
