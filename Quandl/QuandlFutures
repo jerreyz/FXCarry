@@ -1,4 +1,7 @@
 quandl.ApiConfig.api_key = load_private_key()
+QUANDL_FUTURES_CONFIG_FILE = get_filename_for_package("sysdata.quandl.QuandlFuturesConfig.csv")
+
+import pandas as pd
 
 
 class QuandlFuturesContract(futuresContract):
@@ -19,9 +22,30 @@ class QuandlFuturesContract(futuresContract):
             quandl_instrument_data = quandlFuturesConfiguration()
 
         self._quandl_instrument_data = quandl_instrument_data
+        self.MONTH_LIST = ["F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"]
+        
     @classmethod
-    def RawConstructor(self,quandlCode,dateOfContract):
-        TODO
+    def fromQuandlCodeAndDate(cls,quandlCode,dateOfContract):
+        try:
+            # 1. Parse a string to datetime
+            datestamp   = pd.to_datetime(dateOfContract,format='%Y%m')
+        except:
+            raise ValueError("Need a YYYYMM format ")
+            
+        # 3. Read in the Config file    
+        cls.QuandlCSV = pd.read_csv(QUANDL_FUTURES_CONFIG_FILE).set_index("QCODE")
+        
+        # 4. Futures contract list in letters, How months are defined in Futures trading, weird I know
+        MONTH_LIST = ["F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"]
+        # 5 Get the correct month letter and concatenate it with the year
+        quandl_date_id  = MONTH_LIST[datestamp.month-1] + str(datestamp.year)
+
+        # 6. Concatenate the market code and quandl date id to get the timeseries id
+        cls.quandlIdentifier = "%s/%s%s" % (cls.QuandlCSV.loc[quandlCode,"MARKET"],quandlCode,quandl_date_id )
+        
+        # Create a futures contract using classes
+        return cls(futuresContract(futuresInstrument(cls.QuandlCSV.loc[quandlCode,"CODE"]),contractDate(dateOfContract)))
+            
     def quandl_identifier(self):
         """
         Returns the Quandl identifier for a given contract
